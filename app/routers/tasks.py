@@ -16,6 +16,7 @@ def get_tasks(
     """Obtener todas las tareas con paginación."""
     return db.query(TaskDB).offset(skip).limit(limit).all()
 
+
 @router.get("/stats/summary")
 def get_tasks_stats(db: Session = Depends(get_db)):
     """Obtener un resumen de tareas agrupadas por estado y prioridad."""
@@ -33,6 +34,7 @@ def get_tasks_stats(db: Session = Depends(get_db)):
         "by_status": by_status,
         "by_priority": by_priority,
     }
+
 
 @router.get("/{task_id}", response_model=TaskResponse)
 def get_task(task_id: int, db: Session = Depends(get_db)):

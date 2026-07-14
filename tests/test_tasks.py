@@ -197,6 +197,8 @@ class TestDeleteTask:
         """Eliminar tarea inexistente devuelve 404."""
         response = client.delete("/tasks/999")
         assert response.status_code == 404
+
+
 class TestTaskStats:
     """Tests para GET /tasks/stats/summary."""
 
