@@ -1,0 +1,74 @@
+name: CD — Deploy to Staging
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types: [completed]
+    branches: [develop]
+
+jobs:
+  deploy-staging:
+    name: 📦 Deploy to Staging
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment: staging
+
+    steps:
+      - name: Deploy via Dokploy Webhook
+        run: |
+          echo "🚀 Triggering deployment to staging environment..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "${{ secrets.DOKPLOY_WEBHOOK_STAGING }}")
+          
+          if [ "$RESPONSE" -eq 200 ] || [ "$RESPONSE" -eq 201 ]; then
+            echo "✅ Deployment triggered successfully (HTTP $RESPONSE)"
+          else
+            echo "❌ Deployment failed (HTTP $RESPONSE)"
+            exit 1
+          fi
+
+      - name: Wait for deployment to stabilize
+        run: sleep 30
+
+      - name: Health check
+        run: |
+          echo "🔍 Running health check on staging..."
+          HEALTH=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.STAGING_URL }}/health" || echo "000")
+          
+          if [ "$HEALTH" -eq 200 ]; then
+            echo "✅ Staging is healthy!"
+          else
+            echo "⚠️ Health check returned HTTP $HEALTH (may still be starting)"
+          fi
+
+      - name: Discord Notification — Success
+        if: success()
+        run: |
+          curl -s -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "📦 Deploy to Staging — Success",
+                "description": "**Branch:** `develop`\n**Environment:** Staging\n**URL:** ${{ secrets.STAGING_URL }}",
+                "color": 3066993,
+                "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "footer": {"text": "Dokploy — Staging"},
+                "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+              }]
+            }' \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Discord Notification — Failure
+        if: failure()
+        run: |
+          curl -s -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "❌ Deploy to Staging — Failed",
+                "description": "**Branch:** `develop`\n**Environment:** Staging\n**Check logs for details.**",
+                "color": 15158332,
+                "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "footer": {"text": "Dokploy — Staging"}
+              }]
+            }' \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}

@@ -1,0 +1,108 @@
+name: CD — Deploy to Production
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy-production:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # ⚠️ REQUIERE APROBACIÓN MANUAL
+    # Configurar en GitHub: Settings → Environments → production → Required reviewers
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via Dokploy Webhook
+        run: |
+          echo "🚀 Triggering deployment to PRODUCTION..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "${{ secrets.DOKPLOY_WEBHOOK_PRODUCTION }}")
+          
+          if [ "$RESPONSE" -eq 200 ] || [ "$RESPONSE" -eq 201 ]; then
+            echo "✅ Production deployment triggered (HTTP $RESPONSE)"
+          else
+            echo "❌ Production deployment failed (HTTP $RESPONSE)"
+            exit 1
+          fi
+
+      - name: Wait for deployment to stabilize
+        run: sleep 30
+
+      - name: Health check
+        run: |
+          echo "🔍 Running health check on production..."
+          HEALTH=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.PRODUCTION_URL }}/health" || echo "000")
+          
+          if [ "$HEALTH" -eq 200 ]; then
+            echo "✅ Production is healthy!"
+          else
+            echo "⚠️ Health check returned HTTP $HEALTH (may still be starting)"
+          fi
+
+      # ── Crear GitHub Release con tag semántico ────────────────
+      - name: Get next version
+        id: version
+        run: |
+          # Obtener el último tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Last tag: $LAST_TAG"
+          
+          # Incrementar patch version
+          MAJOR=$(echo $LAST_TAG | sed 's/v//' | cut -d. -f1)
+          MINOR=$(echo $LAST_TAG | sed 's/v//' | cut -d. -f2)
+          PATCH=$(echo $LAST_TAG | sed 's/v//' | cut -d. -f3)
+          NEW_PATCH=$((PATCH + 1))
+          NEW_TAG="v${MAJOR}.${MINOR}.${NEW_PATCH}"
+          
+          echo "New tag: $NEW_TAG"
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.new_tag }}
+          name: "Release ${{ steps.version.outputs.new_tag }}"
+          generate_release_notes: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Notificaciones Discord ────────────────────────────────
+      - name: Discord Notification — Success
+        if: success()
+        run: |
+          curl -s -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "🚀 Deploy to Production — Success",
+                "description": "**Version:** `${{ steps.version.outputs.new_tag }}`\n**Environment:** Production\n**URL:** ${{ secrets.PRODUCTION_URL }}\n**Approved by:** Manual approval",
+                "color": 3066993,
+                "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "footer": {"text": "Dokploy — Production"},
+                "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+              }]
+            }' \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Discord Notification — Failure
+        if: failure()
+        run: |
+          curl -s -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "❌ Deploy to Production — FAILED",
+                "description": "**Environment:** Production\n**⚠️ Requires immediate attention!**\n**Check logs for details.**",
+                "color": 15158332,
+                "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "footer": {"text": "Dokploy — Production"}
+              }]
+            }' \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
