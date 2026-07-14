@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import TaskCreate, TaskDB, TaskResponse, TaskUpdate
+from app.models import TaskCreate, TaskDB, TaskPriority, TaskResponse, TaskStatus, TaskUpdate
 
 router = APIRouter(prefix="/tasks", tags=["Tasks"])
 
@@ -15,6 +15,25 @@ def get_tasks(
 ):
     """Obtener todas las tareas con paginación."""
     return db.query(TaskDB).offset(skip).limit(limit).all()
+
+
+@router.get("/stats/summary")
+def get_tasks_stats(db: Session = Depends(get_db)):
+    """Obtener un resumen de tareas agrupadas por estado y prioridad."""
+    tasks = db.query(TaskDB).all()
+
+    by_status = {status_value.value: 0 for status_value in TaskStatus}
+    by_priority = {priority_value.value: 0 for priority_value in TaskPriority}
+
+    for task in tasks:
+        by_status[task.status] = by_status.get(task.status, 0) + 1
+        by_priority[task.priority] = by_priority.get(task.priority, 0) + 1
+
+    return {
+        "total_tasks": len(tasks),
+        "by_status": by_status,
+        "by_priority": by_priority,
+    }
 
 
 @router.get("/{task_id}", response_model=TaskResponse)

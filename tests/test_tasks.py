@@ -197,3 +197,30 @@ class TestDeleteTask:
         """Eliminar tarea inexistente devuelve 404."""
         response = client.delete("/tasks/999")
         assert response.status_code == 404
+
+
+class TestTaskStats:
+    """Tests para GET /tasks/stats/summary."""
+
+    def test_stats_empty(self, client):
+        """Sin tareas, todos los contadores están en cero."""
+        response = client.get("/tasks/stats/summary")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_tasks"] == 0
+        assert data["by_status"]["pending"] == 0
+        assert data["by_priority"]["medium"] == 0
+
+    def test_stats_counts_tasks(self, client):
+        """Los contadores reflejan las tareas creadas por estado y prioridad."""
+        client.post("/tasks/", json={"title": "T1", "priority": "high"})
+        client.post("/tasks/", json={"title": "T2", "priority": "high"})
+        client.post("/tasks/", json={"title": "T3", "status": "completed"})
+
+        response = client.get("/tasks/stats/summary")
+        data = response.json()
+
+        assert data["total_tasks"] == 3
+        assert data["by_priority"]["high"] == 2
+        assert data["by_status"]["completed"] == 1
+        assert data["by_status"]["pending"] == 2
