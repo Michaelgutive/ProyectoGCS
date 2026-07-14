@@ -18,7 +18,7 @@ COPY --from=builder /install /usr/local
 COPY app/ ./app/
 
 # Crear usuario no-root por seguridad
-RUN useradd --create-home appuser
+RUN useradd --create-home appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Exponer puerto
