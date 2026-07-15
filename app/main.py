@@ -11,7 +11,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Task Manager API",
     description=(
-        "API REST para gestión de tareas. Proyecto CI/CD con GitHub Actions, Docker y Dokploy."
+        "API REST para gestión de tareas. Proyecto CI/CD con GitHub Actions, Docker y Render."
     ),
     version="1.0.0",
     docs_url="/docs",

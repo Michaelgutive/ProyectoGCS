@@ -14,11 +14,11 @@ jobs:
     environment: staging
 
     steps:
-      - name: Deploy via Dokploy Webhook
+      - name: Deploy via Render Deploy Hook
         run: |
           echo "🚀 Triggering deployment to staging environment..."
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-            "${{ secrets.DOKPLOY_WEBHOOK_STAGING }}")
+            "${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}")
           
           if [ "$RESPONSE" -eq 200 ] || [ "$RESPONSE" -eq 201 ]; then
             echo "✅ Deployment triggered successfully (HTTP $RESPONSE)"
@@ -52,7 +52,7 @@ jobs:
                 "description": "**Branch:** `develop`\n**Environment:** Staging\n**URL:** ${{ secrets.STAGING_URL }}",
                 "color": 3066993,
                 "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                "footer": {"text": "Dokploy — Staging"},
+                "footer": {"text": "Render — Staging"},
                 "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
               }]
             }' \
@@ -68,7 +68,7 @@ jobs:
                 "description": "**Branch:** `develop`\n**Environment:** Staging\n**Check logs for details.**",
                 "color": 15158332,
                 "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                "footer": {"text": "Dokploy — Staging"}
+                "footer": {"text": "Render — Staging"}
               }]
             }' \
             ${{ secrets.DISCORD_WEBHOOK_URL }}
