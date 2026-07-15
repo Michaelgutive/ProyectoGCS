@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Manager — Panel</title>
+<style>
+  :root{
+    --bg:#0d1117;
+    --panel:#151b23;
+    --border:#2a323d;
+    --text:#e6edf3;
+    --muted:#8b96a5;
+    --accent:#3fb950;
+    --accent-dim:#1a4d29;
+    --low:#8b96a5;
+    --medium:#d29922;
+    --high:#f85149;
+    --mono: "SF Mono","Consolas","JetBrains Mono",monospace;
+    --sans: "Inter","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    min-height:100vh;
+  }
+  header{
+    padding:22px 32px 18px;
+    border-bottom:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand .dot{width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accent);}
+  .brand h1{font-size:17px; margin:0; font-weight:600; letter-spacing:0.2px;}
+  .brand span{font-family:var(--mono); font-size:12px; color:var(--muted);}
+
+  .conn{display:flex; align-items:center; gap:8px;}
+  .conn input{
+    background:var(--panel); border:1px solid var(--border); color:var(--text);
+    font-family:var(--mono); font-size:12px; padding:7px 10px; border-radius:6px; width:340px;
+  }
+  .conn button{
+    background:transparent; border:1px solid var(--border); color:var(--muted);
+    font-size:12px; padding:7px 12px; border-radius:6px; cursor:pointer;
+  }
+  .conn button:hover{border-color:var(--accent); color:var(--accent);}
+  .pill{font-family:var(--mono); font-size:11px; padding:4px 9px; border-radius:999px; border:1px solid var(--border); color:var(--muted);}
+  .pill.ok{color:var(--accent); border-color:var(--accent-dim); background:rgba(63,185,80,.08);}
+  .pill.err{color:var(--high); border-color:#5a1f1c; background:rgba(248,81,73,.08);}
+
+  main{padding:24px 32px 60px; max-width:1200px; margin:0 auto;}
+
+  .stats{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px;
+  }
+  .stat{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 18px;
+  }
+  .stat .n{font-family:var(--mono); font-size:26px; font-weight:600;}
+  .stat .l{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-top:4px;}
+
+  .composer{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:16px; margin-bottom:28px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;
+  }
+  .field{display:flex; flex-direction:column; gap:5px;}
+  .field label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px;}
+  .field input, .field select{
+    background:#0d1117; border:1px solid var(--border); color:var(--text);
+    padding:8px 10px; border-radius:6px; font-size:13px; font-family:var(--sans);
+  }
+  .field.grow{flex:1; min-width:200px;}
+  .composer button{
+    background:var(--accent); border:none; color:#0d1117; font-weight:600;
+    padding:9px 18px; border-radius:6px; cursor:pointer; font-size:13px;
+  }
+  .composer button:hover{filter:brightness(1.08);}
+
+  .board{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
+  .col{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px; min-height:120px;}
+  .col h2{
+    font-size:12px; text-transform:uppercase; letter-spacing:0.6px; color:var(--muted);
+    display:flex; justify-content:space-between; margin:2px 4px 14px;
+  }
+  .col h2 .count{font-family:var(--mono); color:var(--text);}
+
+  .card{
+    background:#0d1117; border:1px solid var(--border); border-radius:8px;
+    padding:12px 12px 10px; margin-bottom:10px;
+  }
+  .card .top{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .card .title{font-size:13.5px; font-weight:600; line-height:1.3;}
+  .card .desc{font-size:12px; color:var(--muted); margin-top:4px; line-height:1.4;}
+  .card .meta{display:flex; justify-content:space-between; align-items:center; margin-top:10px;}
+  .prio{font-family:var(--mono); font-size:10.5px; padding:2px 7px; border-radius:999px; border:1px solid;}
+  .prio.low{color:var(--low); border-color:#3a4552;}
+  .prio.medium{color:var(--medium); border-color:#5a4419;}
+  .prio.high{color:var(--high); border-color:#5a1f1c;}
+  .actions{display:flex; gap:6px;}
+  .actions button{
+    background:transparent; border:1px solid var(--border); color:var(--muted);
+    font-size:10.5px; padding:4px 8px; border-radius:5px; cursor:pointer; font-family:var(--sans);
+  }
+  .actions button:hover{color:var(--text); border-color:var(--text);}
+  .actions button.del:hover{color:var(--high); border-color:var(--high);}
+  .empty{color:var(--muted); font-size:12px; padding:10px 4px; font-style:italic;}
+  #toast{
+    position:fixed; bottom:20px; right:20px; background:var(--panel); border:1px solid var(--border);
+    padding:10px 16px; border-radius:8px; font-size:12.5px; opacity:0; transform:translateY(8px);
+    transition:all .25s; pointer-events:none;
+  }
+  #toast.show{opacity:1; transform:translateY(0);}
+  #toast.err{border-color:#5a1f1c; color:var(--high);}
+  #toast.ok{border-color:var(--accent-dim); color:var(--accent);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="dot"></div>
+    <div>
+      <h1>Task Manager</h1>
+      <span>panel de control · consume la API en vivo</span>
+    </div>
+  </div>
+  <div class="conn">
+    <input id="apiBase" value="https://proyectogcs-staging.onrender.com" spellcheck="false">
+    <button onclick="loadAll()">Conectar</button>
+    <span id="connStatus" class="pill">sin probar</span>
+  </div>
+</header>
+
+<main>
+  <div class="stats" id="stats"></div>
+
+  <div class="composer">
+    <div class="field grow">
+      <label>Título</label>
+      <input id="f_title" placeholder="Ej. Ensayar demo de CI/CD">
+    </div>
+    <div class="field grow">
+      <label>Descripción</label>
+      <input id="f_desc" placeholder="Opcional">
+    </div>
+    <div class="field">
+      <label>Estado</label>
+      <select id="f_status">
+        <option value="pending">pending</option>
+        <option value="in_progress">in_progress</option>
+        <option value="completed">completed</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Prioridad</label>
+      <select id="f_priority">
+        <option value="low">low</option>
+        <option value="medium" selected>medium</option>
+        <option value="high">high</option>
+      </select>
+    </div>
+    <button onclick="createTask()">+ Crear tarea</button>
+  </div>
+
+  <div class="board">
+    <div class="col">
+      <h2>Pending <span class="count" id="count_pending">0</span></h2>
+      <div id="col_pending"></div>
+    </div>
+    <div class="col">
+      <h2>In progress <span class="count" id="count_in_progress">0</span></h2>
+      <div id="col_in_progress"></div>
+    </div>
+    <div class="col">
+      <h2>Completed <span class="count" id="count_completed">0</span></h2>
+      <div id="col_completed"></div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+let API = document.getElementById('apiBase').value.replace(/\/$/, '');
+
+function toast(msg, type){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + (type || '');
+  setTimeout(()=>{ t.className=''; }, 2600);
+}
+
+function setConn(ok, label){
+  const el = document.getElementById('connStatus');
+  el.textContent = label;
+  el.className = 'pill ' + (ok===true?'ok':ok===false?'err':'');
+}
+
+async function api(path, opts){
+  const res = await fetch(API + path, Object.assign({
+    headers:{'Content-Type':'application/json'}
+  }, opts));
+  if(!res.ok){
+    const body = await res.json().catch(()=>({}));
+    throw new Error(body.detail ? JSON.stringify(body.detail) : ('HTTP ' + res.status));
+  }
+  if(res.status === 204) return null;
+  return res.json();
+}
+
+function prioBadge(p){
+  return `<span class="prio ${p}">${p}</span>`;
+}
+
+function renderCard(task){
+  return `
+  <div class="card">
+    <div class="top">
+      <div class="title">${escapeHtml(task.title)}</div>
+    </div>
+    ${task.description ? `<div class="desc">${escapeHtml(task.description)}</div>` : ''}
+    <div class="meta">
+      ${prioBadge(task.priority)}
+      <div class="actions">
+        ${task.status !== 'pending' ? `<button onclick="setStatus(${task.id},'pending')">Pending</button>` : ''}
+        ${task.status !== 'in_progress' ? `<button onclick="setStatus(${task.id},'in_progress')">En curso</button>` : ''}
+        ${task.status !== 'completed' ? `<button onclick="setStatus(${task.id},'completed')">Completar</button>` : ''}
+        <button class="del" onclick="deleteTask(${task.id})">Eliminar</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+async function loadAll(){
+  API = document.getElementById('apiBase').value.replace(/\/$/, '');
+  try{
+    const tasks = await api('/tasks/');
+    const stats = await api('/tasks/stats/summary');
+    setConn(true, 'conectado');
+    renderStats(stats);
+    renderBoard(tasks);
+  }catch(e){
+    setConn(false, 'sin conexión');
+    toast('No se pudo conectar: ' + e.message, 'err');
+  }
+}
+
+function renderStats(stats){
+  const el = document.getElementById('stats');
+  el.innerHTML = `
+    <div class="stat"><div class="n">${stats.total_tasks}</div><div class="l">Total</div></div>
+    <div class="stat"><div class="n">${stats.by_status.pending}</div><div class="l">Pending</div></div>
+    <div class="stat"><div class="n">${stats.by_status.in_progress}</div><div class="l">In progress</div></div>
+    <div class="stat"><div class="n">${stats.by_status.completed}</div><div class="l">Completed</div></div>
+  `;
+}
+
+function renderBoard(tasks){
+  const cols = {pending:[], in_progress:[], completed:[]};
+  tasks.forEach(t => { if(cols[t.status]) cols[t.status].push(t); });
+  Object.keys(cols).forEach(key=>{
+    const container = document.getElementById('col_' + key);
+    document.getElementById('count_' + key).textContent = cols[key].length;
+    container.innerHTML = cols[key].length
+      ? cols[key].map(renderCard).join('')
+      : `<div class="empty">Sin tareas</div>`;
+  });
+}
+
+async function createTask(){
+  const title = document.getElementById('f_title').value.trim();
+  if(!title){ toast('El título es obligatorio', 'err'); return; }
+  const payload = {
+    title,
+    description: document.getElementById('f_desc').value.trim() || null,
+    status: document.getElementById('f_status').value,
+    priority: document.getElementById('f_priority').value
+  };
+  try{
+    await api('/tasks/', {method:'POST', body:JSON.stringify(payload)});
+    document.getElementById('f_title').value = '';
+    document.getElementById('f_desc').value = '';
+    toast('Tarea creada', 'ok');
+    loadAll();
+  }catch(e){
+    toast('Error al crear: ' + e.message, 'err');
+  }
+}
+
+async function setStatus(id, status){
+  try{
+    await api('/tasks/' + id, {method:'PUT', body:JSON.stringify({status})});
+    toast('Estado actualizado', 'ok');
+    loadAll();
+  }catch(e){
+    toast('Error al actualizar: ' + e.message, 'err');
+  }
+}
+
+async function deleteTask(id){
+  try{
+    await api('/tasks/' + id, {method:'DELETE'});
+    toast('Tarea eliminada', 'ok');
+    loadAll();
+  }catch(e){
+    toast('Error al eliminar: ' + e.message, 'err');
+  }
+}
+
+loadAll();
+</script>
+</body>
+</html>
