@@ -183,3 +183,6 @@ Configurar en **Settings → Branches → Branch protection rules**:
 ## 📄 Licencia
 
 Proyecto académico — Gestión de Configuración de Software.
+
+## Changelog reciente
+- Filtros de búsqueda agregados a `GET /tasks/` (por estado y prioridad)
