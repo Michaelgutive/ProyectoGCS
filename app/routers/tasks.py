@@ -15,7 +15,7 @@ def get_tasks(
     priority_filter: TaskPriority | None = None,
     db: Session = Depends(get_db),
 ):
-   
+
     query = db.query(TaskDB)
     if status_filter is not None:
         query = query.filter(TaskDB.status == status_filter.value)

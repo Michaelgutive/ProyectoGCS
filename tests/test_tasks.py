@@ -90,7 +90,7 @@ class TestGetTasks:
         assert len(response.json()) == 2
 
     def test_get_tasks_filter_by_status(self, client):
-      
+
         client.post("/tasks/", json={"title": "Pendiente 1"})
         client.post("/tasks/", json={"title": "Pendiente 2"})
         client.post("/tasks/", json={"title": "Completada", "status": "completed"})
@@ -100,9 +100,9 @@ class TestGetTasks:
         data = response.json()
         assert len(data) == 1
         assert data[0]["title"] == "Completada"
-    
+
     def test_get_tasks_filter_by_priority(self, client):
-        
+
         client.post("/tasks/", json={"title": "Baja", "priority": "low"})
         client.post("/tasks/", json={"title": "Urgente 1", "priority": "high"})
         client.post("/tasks/", json={"title": "Urgente 2", "priority": "high"})
