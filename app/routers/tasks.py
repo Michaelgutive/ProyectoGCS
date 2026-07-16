@@ -11,10 +11,14 @@ router = APIRouter(prefix="/tasks", tags=["Tasks"])
 def get_tasks(
     skip: int = 0,
     limit: int = 100,
+    status_filter: TaskStatus | None = None,
     db: Session = Depends(get_db),
 ):
-    """Obtener todas las tareas con paginación."""
-    return db.query(TaskDB).offset(skip).limit(limit).all()
+    """Obtener todas las tareas con paginación, con filtro opcional por estado."""
+    query = db.query(TaskDB)
+    if status_filter is not None:
+        query = query.filter(TaskDB.status == status_filter.value)
+    return query.offset(skip).limit(limit).all()
 
 
 @router.get("/stats/summary")

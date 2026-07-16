@@ -89,6 +89,18 @@ class TestGetTasks:
         assert response.status_code == 200
         assert len(response.json()) == 2
 
+    def test_get_tasks_filter_by_status(self, client):
+        """Filtrar tareas por estado devuelve solo las que coinciden."""
+        client.post("/tasks/", json={"title": "Pendiente 1"})
+        client.post("/tasks/", json={"title": "Pendiente 2"})
+        client.post("/tasks/", json={"title": "Completada", "status": "completed"})
+
+        response = client.get("/tasks/?status_filter=completed")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["title"] == "Completada"
+
 
 class TestGetTaskById:
     """Tests para GET /tasks/{task_id}."""
