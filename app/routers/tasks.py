@@ -12,12 +12,15 @@ def get_tasks(
     skip: int = 0,
     limit: int = 100,
     status_filter: TaskStatus | None = None,
+    priority_filter: TaskPriority | None = None,
     db: Session = Depends(get_db),
 ):
-    """Obtener todas las tareas con paginación, con filtro opcional por estado."""
+   
     query = db.query(TaskDB)
     if status_filter is not None:
         query = query.filter(TaskDB.status == status_filter.value)
+    if priority_filter is not None:
+        query = query.filter(TaskDB.priority == priority_filter.value)
     return query.offset(skip).limit(limit).all()
 
 
