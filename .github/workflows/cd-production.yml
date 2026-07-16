@@ -18,12 +18,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Deploy via Dokploy Webhook
+      - name: Deploy via Render Deploy Hook
         run: |
           echo "🚀 Triggering deployment to PRODUCTION..."
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-            "${{ secrets.DOKPLOY_WEBHOOK_PRODUCTION }}")
+            "${{ secrets.RENDER_DEPLOY_HOOK_PRODUCTION }}")
           
           if [ "$RESPONSE" -eq 200 ] || [ "$RESPONSE" -eq 201 ]; then
             echo "✅ Production deployment triggered (HTTP $RESPONSE)"
@@ -86,7 +88,7 @@ jobs:
                 "description": "**Version:** `${{ steps.version.outputs.new_tag }}`\n**Environment:** Production\n**URL:** ${{ secrets.PRODUCTION_URL }}\n**Approved by:** Manual approval",
                 "color": 3066993,
                 "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                "footer": {"text": "Dokploy — Production"},
+                "footer": {"text": "Render — Production"},
                 "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
               }]
             }' \
@@ -102,7 +104,7 @@ jobs:
                 "description": "**Environment:** Production\n**⚠️ Requires immediate attention!**\n**Check logs for details.**",
                 "color": 15158332,
                 "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-                "footer": {"text": "Dokploy — Production"}
+                "footer": {"text": "Render — Production"}
               }]
             }' \
             ${{ secrets.DISCORD_WEBHOOK_URL }}

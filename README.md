@@ -1,11 +1,10 @@
 # 🚀 Task Manager API — CI/CD Pipeline
 
-<!-- TODO: Reemplazar USUARIO/REPO con tu usuario y nombre del repo -->
-![CI Pipeline](https://github.com/USUARIO/REPO/actions/workflows/ci.yml/badge.svg)
-![CD Staging](https://github.com/USUARIO/REPO/actions/workflows/cd-staging.yml/badge.svg)
-![CD Production](https://github.com/USUARIO/REPO/actions/workflows/cd-production.yml/badge.svg)
+![CI Pipeline](https://github.com/Michaelgutive/proyectogcs/actions/workflows/ci.yml/badge.svg)
+![CD Staging](https://github.com/Michaelgutive/proyectogcs/actions/workflows/cd-staging.yml/badge.svg)
+![CD Production](https://github.com/Michaelgutive/proyectogcs/actions/workflows/cd-production.yml/badge.svg)
 
-API REST para gestión de tareas construida con **FastAPI**, con un pipeline **CI/CD profesional** usando **GitHub Actions**, **Docker**, y **Dokploy**.
+API REST para gestión de tareas construida con **FastAPI**, con un pipeline **CI/CD profesional** usando **GitHub Actions**, **Docker**, y **Render**.
 
 ---
 
@@ -33,7 +32,7 @@ API REST para gestión de tareas construida con **FastAPI**, con un pipeline **C
                                                                   │
                                                                   ▼
                     ┌─────────────────┐          ┌─────────────────────────┐
-                    │  Docker Image   │─────────▶│     Dokploy (VPS)       │
+                    │  Docker Image   │─────────▶│     Render (Cloud)      │
                     │  (GHCR)         │          │  ┌─────────┐ ┌───────┐  │
                     └─────────────────┘          │  │ Staging │ │  Prod │  │
                                                  │  └─────────┘ └───────┘  │
@@ -56,7 +55,7 @@ API REST para gestión de tareas construida con **FastAPI**, con un pipeline **C
 | **Container** | Docker, Docker Compose |
 | **Registry** | GitHub Container Registry (GHCR) |
 | **CI/CD** | GitHub Actions |
-| **Deploy** | Dokploy (self-hosted PaaS) |
+| **Deploy** | Render (Cloud PaaS) |
 | **Notificaciones** | Discord Webhooks |
 
 ---
@@ -91,14 +90,14 @@ Se ejecuta en cada **push** y **pull request** a `main` y `develop`:
 
 ### CD Staging (`cd-staging.yml`)
 Se ejecuta automáticamente cuando CI pasa en `develop`:
-- Deploy automático a staging vía Dokploy webhook
+- Deploy automático a staging vía Render deploy hook
 - Health check post-deploy
 - Notificación a Discord
 
 ### CD Production (`cd-production.yml`)
 Se ejecuta cuando CI pasa en `main`:
 - ⚠️ **Requiere aprobación manual** (Environment Protection)
-- Deploy a producción vía Dokploy webhook
+- Deploy a producción vía Render deploy hook
 - Creación automática de GitHub Release con versionado semántico
 - Notificación a Discord
 
@@ -149,10 +148,10 @@ Configurar en **Settings → Secrets and variables → Actions**:
 | Secret | Descripción |
 |---|---|
 | `DISCORD_WEBHOOK_URL` | Webhook URL de tu canal de Discord |
-| `DOKPLOY_WEBHOOK_STAGING` | Webhook URL de Dokploy para staging |
-| `DOKPLOY_WEBHOOK_PRODUCTION` | Webhook URL de Dokploy para producción |
-| `STAGING_URL` | URL base de la app en staging |
-| `PRODUCTION_URL` | URL base de la app en producción |
+| `RENDER_DEPLOY_HOOK_STAGING` | Deploy Hook URL del servicio staging en Render |
+| `RENDER_DEPLOY_HOOK_PRODUCTION` | Deploy Hook URL del servicio producción en Render |
+| `STAGING_URL` | URL base de la app en staging (ej: `https://proyectogcs-staging.onrender.com`) |
+| `PRODUCTION_URL` | URL base de la app en producción (ej: `https://proyectogcs-production.onrender.com`) |
 
 ### Environments
 Configurar en **Settings → Environments**:
